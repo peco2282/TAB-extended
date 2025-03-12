@@ -6,3 +6,8 @@ api-version: '1.21'
 commands:
   tabextend:
     description: Plugin's main command
+    permission: tabexpand.command
+
+permissions:
+  tabexpand.command:
+    default: op
