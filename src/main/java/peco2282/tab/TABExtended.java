@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 
 public final class TABExtended extends JavaPlugin {
   private static final Logger log = LogManager.getLogger(TABExtended.class);
@@ -46,8 +47,8 @@ public final class TABExtended extends JavaPlugin {
       TabExtendCommand tabExtendCommand = new TabExtendCommand();
       command.setExecutor(tabExtendCommand);
       command.setTabCompleter(tabExtendCommand);
-      command.setUsage("/tabextend");
     }
+    getServer().getPluginManager().registerEvents(new EventListener(), this);
 
     log.info("Successfully loaded plugin `TAB-EXTENDED`");
   }
@@ -55,6 +56,15 @@ public final class TABExtended extends JavaPlugin {
   @Override
   public void onDisable() {
     // Plugin shutdown logic
+    savePlayerMap();
+  }
+
+  public void savePlayerMap() {
+    try {
+      playerMap.save(new File(getDataFolder(), "playermap.yml"));
+    } catch (IOException e) {
+      log.error(e);
+    }
   }
 
   /**

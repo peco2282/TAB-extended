@@ -1,100 +1,82 @@
 package peco2282.tab;
 
+import me.neznamy.tab.api.TabPlayer;
+import me.neznamy.tab.api.tablist.TabListFormatManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * コンフィグファイルの情報
  */
 public class Config {
   private static final Logger log = LogManager.getLogger(Config.class);
-  private final String crafterColor;
-  private final RankSet rank0;
-  private final RankSet rank1;
-  private final RankSet rank2;
-  private final RankSet rank3;
-  private final RankSet rank4;
-  private final RankSet rank5;
-  private final RankSet rank6;
-  private final RankSet rank7;
-  private final RankSet rank8;
-  private final RankSet rank9;
-  private final Set<RankSet> ranks = new HashSet<>();
+  private final Set<RoleSet> roleSets = new HashSet<>(4);
+  private final List<RankSet> ranks = new ArrayList<>();
 
   Config(FileConfiguration config) {
-    crafterColor = config.getString("role.crafter.color");
-    rank0 = rankset(config, 0);
-    rank1 = rankset(config, 1);
-    rank2 = rankset(config, 2);
-    rank3 = rankset(config, 3);
-    rank4 = rankset(config, 4);
-    rank5 = rankset(config, 5);
-    rank6 = rankset(config, 6);
-    rank7 = rankset(config, 7);
-    rank8 = rankset(config, 8);
-    rank9 = rankset(config, 9);
+    initRoles(config);
+    initRanks(config);
+
+    Rank.bind(ranks.toArray(RankSet[]::new));
     log.info("Loaded config. ranks: {}", ranks.size());
   }
 
-  private RankSet rankset(FileConfiguration config, int index) {
-    String name = config.getString("rank." + index + ".name");
-    String display = config.getString("rank." + index + ".display");
-    String color = config.getString("rank." + index + ".color");
-    RankSet set = new RankSet(name, display, color);
-    ranks.add(set);
-    return set;
+  private void initRoles(FileConfiguration config) {
+    ConfigurationSection section = config.getConfigurationSection("role");
+    if (section != null) {
+      section.getKeys(false).forEach(key -> roleSets.add(new RoleSet(
+          key,
+          config.getString("role." + key + ".color")
+      )));
+      log.info("Loaded roles: {}", roleSets.size());
+      return;
+    }
+    throw new IllegalArgumentException("role section is not found.");
   }
 
-  public Set<RankSet> getRanks() {
+  private void initRanks(FileConfiguration config) {
+    ConfigurationSection section = config.getConfigurationSection("rank");
+    if (section != null) {
+      final int size = section.getKeys(false).size();
+      for (int index = 0; index < size; index++) {
+        String name = section.getString(index + ".name");
+        String display = section.getString(index + ".display");
+        String color = section.getString(index + ".color");
+        RankSet set = new RankSet(name, display, color);
+        ranks.add(set);
+      }
+      return;
+    }
+    throw new IllegalArgumentException("rank section is not found.");
+  }
+
+  public boolean isValidRole(String role) {
+    return roleSets.stream().map(RoleSet::name).anyMatch(role::equals);
+  }
+
+  public Optional<RoleSet> getRoleSet(String name) {
+    return roleSets.stream()
+        .filter(rs -> rs.name().equalsIgnoreCase(name))
+        .findFirst();
+  }
+
+  public List<RankSet> getRanks() {
     return ranks;
   }
 
-  public RankSet getRank9() {
-    return rank9;
-  }
+  public record RoleSet(String name, String color) {
+    public void withPrefix(TabListFormatManager manager, TabPlayer p) {
+      manager.setPrefix(p, color);
+    }
 
-  public RankSet getRank8() {
-    return rank8;
-  }
-
-  public RankSet getRank7() {
-    return rank7;
-  }
-
-  public RankSet getRank6() {
-    return rank6;
-  }
-
-  public RankSet getRank5() {
-    return rank5;
-  }
-
-  public RankSet getRank4() {
-    return rank4;
-  }
-
-  public RankSet getRank3() {
-    return rank3;
-  }
-
-  public RankSet getRank2() {
-    return rank2;
-  }
-
-  public RankSet getRank1() {
-    return rank1;
-  }
-
-  public RankSet getRank0() {
-    return rank0;
-  }
-
-  public String getCrafterColor() {
-    return crafterColor;
+    @Override
+    public String toString() {
+      return color + name + "&r";
+    }
   }
 
   public record RankSet(String name, String display, String color) {
