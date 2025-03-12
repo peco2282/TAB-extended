@@ -1,3 +1,13 @@
+# ランクのセクション
+# 0~9の数値は変えないこと
+# name: 内部IDのようなもの。
+# display: 表示用
+# color: TABプラグインのカラーコードに則った表記('§' を '&' に置き換え)
+
+#  name: aiueo
+#  display: あいうえお
+#  color: "&a"
+
 rank:
   0:
     name: test0
@@ -44,6 +54,10 @@ rank:
     name: test9
     display: display9
     color: "&c"
+
+# ロールのセクション
+# crafterなどは適宜置き換え可能
+# color: は変えずに同上の書き方で。
 
 role:
   crafter:

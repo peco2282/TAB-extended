@@ -1,7 +1,3 @@
 # playername
-#    role: ROLE
+#    role: configのロールで指定したもの(コマンドで実行した場合、自動保存される)
 #    point: 0
-
-peco_2282:
-  role: ROLE
-  point: 0
