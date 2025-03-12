@@ -1,0 +1,52 @@
+rank:
+  0:
+    name: test0
+    display: display0
+    color: "&c"
+  1:
+    name: test1
+    display: display1
+    color: "&c"
+  2:
+    name: test2
+    display: display2
+    color: "&c"
+  3:
+    name: test3
+    display: display3
+    color: "&c"
+  4:
+    name: test4
+    display: display4
+    color: "&c"
+
+  5:
+    name: test5
+    display: display5
+    color: "&c"
+
+  6:
+    name: test6
+    display: display6
+    color: "&c"
+
+  7:
+    name: test7
+    display: display7
+    color: "&c"
+
+  8:
+    name: test8
+    display: display8
+    color: "&c"
+
+  9:
+    name: test9
+    display: display9
+    color: "&c"
+
+role:
+  crafter:
+    color: "&a"
+  house:
+    color: "&a"

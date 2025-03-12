@@ -1,0 +1,8 @@
+name: TAB-extended
+version: '1.0'
+main: peco2282.tab.TABExtended
+api-version: '1.21'
+
+commands:
+  tabextend:
+    description: Plugin's main command
