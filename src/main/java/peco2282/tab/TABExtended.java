@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Contract;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +17,17 @@ public final class TABExtended extends JavaPlugin {
   private Config config;
   private PlayerMap playerMap;
 
+  @Contract(pure = true)
   public static TABExtended instance() {
     return instance;
   }
 
+  @Contract(pure = true)
   public static Config config() {
     return instance.config;
   }
 
+  @Contract(pure = true)
   public static PlayerMap playerMap() {
     return instance.playerMap;
   }
@@ -61,7 +65,7 @@ public final class TABExtended extends JavaPlugin {
 
   public void savePlayerMap() {
     try {
-      playerMap.save(new File(getDataFolder(), "playermap.yml"));
+      playerMap.save(playerMapFile);
     } catch (IOException e) {
       log.error(e);
     }
@@ -77,5 +81,9 @@ public final class TABExtended extends JavaPlugin {
     }
 
     return YamlConfiguration.loadConfiguration(playerMapFile);
+  }
+
+  public void reloadPlayerMap() {
+    this.playerMap = new PlayerMap(loadPlayerMapConfig());
   }
 }

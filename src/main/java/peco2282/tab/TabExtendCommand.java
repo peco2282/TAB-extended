@@ -3,7 +3,6 @@ package peco2282.tab;
 import me.neznamy.tab.api.TabAPI;
 import me.neznamy.tab.api.TabPlayer;
 import me.neznamy.tab.api.tablist.TabListFormatManager;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.ChatColor;
@@ -19,7 +18,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+/**
+ * めっちゃ見にくくなってる自信あります。
+ */
 @SuppressWarnings("deprecation")
 public class TabExtendCommand implements CommandExecutor, TabCompleter {
   private static final Logger log = LogManager.getLogger(TabExtendCommand.class);
@@ -28,7 +31,8 @@ public class TabExtendCommand implements CommandExecutor, TabCompleter {
 
   private static final String RESET_COLOR = COLOR_CHAR + "r";
   private static final String ROLE = "role";
-  private static final String RANK = "rank";
+  private static final String RANK = "point";
+  private static final String RELOAD = "reload";
 
   private static List<String> allPlayers(CommandSender sender) {
     return sender.getServer().getWorlds().stream()
@@ -50,24 +54,24 @@ public class TabExtendCommand implements CommandExecutor, TabCompleter {
     if (roleSet.isPresent()) {
       PlayerMap map = TABExtended.playerMap();
       final Optional<PlayerMap.PlayerData> playerData = map.getPlayerData(playerRawName);
-      playerData.ifPresentOrElse(data -> {
+      playerData.ifPresent(data -> {
         PlayerMap.PlayerData replaced = data.replaceRole(role);
         map.replace(playerRawName, replaced);
         Config.RoleSet set = roleSet.get();
-        manager.setName(player, set.color() + "%player%&r " + replaced.getRank().toString());
-        sender.sendMessage("Set role " + set.toString().replace('&', COLOR_CHAR) + " to " + playerRawName);
-      }, () -> {
-        TABExtended.playerMap().putPlayerData(playerRawName, new PlayerMap.PlayerData(playerRawName, role, 0));
-        log.info("Unknown user : {}", playerRawName);
-        sender.sendMessage(ChatColor.RED + "Unknown user :" + playerRawName);
+        manager.setName(player, Constants.joinTAB(set.color(), "%player%", replaced.getRank().toString()));
+        sender.sendMessage(ChatColor.GREEN + "ロール" + ChatColor.RESET + " '" + set.toString().replace('&', COLOR_CHAR) + "' " + ChatColor.GREEN + "を" + playerRawName + "に付与しました");
       });
-    } else {
-      sender.sendMessage(ChatColor.RED + "Role not found:" + role);
-      log.info("Role not found : {}", role);
     }
   }
 
-  private static void setRank(TabPlayer player, Rank rank) {
+  private static void setPoint(CommandSender sender, TabPlayer player, PlayerMap.PlayerData data, TabListFormatManager manager) {
+    Optional<Config.RoleSet> set = TABExtended.config().getRoleSet(data.role());
+    if (set.isPresent()) {
+      manager.setName(player, Constants.joinTAB(set.get().color(), "%player%", data.getRank().toString()));
+      sender.sendMessage(ChatColor.GREEN + Constants.joinClient(set.get().color(), data.player(), data.getRank().toString()));
+    } else {
+      sender.sendMessage(ChatColor.YELLOW + "ロールが見つかりません。");
+    }
   }
 
   /**
@@ -88,28 +92,59 @@ public class TabExtendCommand implements CommandExecutor, TabCompleter {
       sender.sendMessage(ChatColor.AQUA + "/tabextend role <playername> <rolename>");
       return false;
     }
+    if (args[0].equals(RELOAD)) {
+      TABExtended.instance().onDisable();
+    }
     TabAPI api = TabAPI.getInstance();
     TabListFormatManager manager = api.getTabListFormatManager();
     if (args[0].equals(ROLE)) {
+      if (args.length == 1) {
+        var roles = TABExtended.config().getRoles().stream().map(Config.RoleSet::name).collect(
+            Collectors.joining(ChatColor.RESET + ", " + ChatColor.AQUA,
+                ChatColor.AQUA.toString(), ChatColor.RESET.toString())
+        );
+        sender.sendMessage(ChatColor.GREEN + "有効なロールは " + ChatColor.RESET + roles + " です");
+        return true;
+      }
       String name = args[1];
       String role = args[2];
+      if (!TABExtended.config().isValidRole(role)) {
+        sender.sendMessage(ChatColor.RED + role + "というロールは見つかりません");
+        return false;
+      }
       TabPlayer tp = api.getPlayer(name);
       if (tp == null || !allPlayers(sender).contains(name)) {
-        sender.sendMessage(ChatColor.YELLOW + "Player " + name + " is not found (maybe offline).");
+        sender.sendMessage(ChatColor.YELLOW + name + " というプレイヤーは見つかりませんでした。");
         log.warn("{} is not found.", name);
-        if (TABExtended.config().isValidRole(role)) {
-          TABExtended.playerMap().putPlayerData(name, new PlayerMap.PlayerData(name, role, 0));
-          sender.sendMessage(ChatColor.GREEN + "Set role " + role + " to " + name);
-          return true;
-        } else {
-          sender.sendMessage(ChatColor.RED + "Unknown role : " + role);
-          return false;
-        }
+        TABExtended.playerMap().putPlayerData(name, new PlayerMap.PlayerData(name, role, 0));
+        sender.sendMessage(ChatColor.GREEN + name + " の登録が完了しました。");
+        return true;
       }
       setRole(sender, tp, name, role, manager);
       return true;
     } else if (args[0].equals(RANK)) {
+      String name = args[1];
+      String type = args[2];
+      int point = Integer.parseInt(args[3]);
+      TabPlayer tp = api.getPlayer(name);
       log.info("{} is not found.", args[1]);
+      if (tp == null || !allPlayers(sender).contains(name)) {
+        sender.sendMessage(ChatColor.YELLOW + name + " というプレイヤーは見つかりませんでした。");
+        return false;
+      }
+      Optional<PlayerMap.PlayerData> opdata = TABExtended.playerMap().getPlayerData(name);
+      if (opdata.isPresent()) {
+        PlayerMap.PlayerData data = opdata.get();
+        PlayerMap.PlayerData replaced = data;
+        replaced = switch (type) {
+          case "add" -> data.replacePoint(i -> i + point);
+          case "set" -> data.replacePoint($ -> point);
+          case "remove" -> data.replacePoint(i -> i - point);
+          default -> replaced;
+        };
+        TABExtended.playerMap().putPlayerData(name, replaced);
+        setPoint(sender, tp, replaced, manager);
+      }
       return true;
     }
     sender.sendMessage(ChatColor.AQUA + "/tabextend role <playername> <rolename>");
@@ -132,11 +167,11 @@ public class TabExtendCommand implements CommandExecutor, TabCompleter {
   @Override
   public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
     if (label.equalsIgnoreCase("tabextend")) {
-      return List.of(ROLE, RANK);
+      return List.of(ROLE, RANK, RELOAD);
     }
-    if (label.equalsIgnoreCase(ROLE)) {
-      return allPlayers(sender);
-    }
+//    if (label.equalsIgnoreCase(ROLE)) {
+//      return allPlayers(sender);
+//    }
     return List.of();
   }
 }

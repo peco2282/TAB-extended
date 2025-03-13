@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 /**
  * コンフィグ情報から得られたユーザーデータの保持
@@ -43,6 +44,10 @@ public class PlayerMap {
     return playerSet.values().stream().filter(playerData -> playerData.player().equals(player)).findFirst();
   }
 
+  public Set<String> getPlayers() {
+    return Collections.unmodifiableSet((playerSet.keySet()));
+  }
+
   public void putPlayerData(String player, PlayerData data) {
     playerSet.put(player, data);
     ConfigurationSection section = config.createSection(player);
@@ -72,8 +77,16 @@ public class PlayerMap {
       return new PlayerData(player, newRole, point);
     }
 
+    public PlayerData replacePoint(IntUnaryOperator newPoint) {
+      int p = newPoint.applyAsInt(point);
+      if (p < 0) {
+        throw new IllegalArgumentException("Negative point");
+      }
+      return new PlayerData(player, role, p);
+    }
+
     public Rank getRank() {
-      return Rank.getRank(point);
+      return Constants.getRank(point);
     }
   }
 }

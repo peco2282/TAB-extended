@@ -54,6 +54,10 @@ public class Config {
     throw new IllegalArgumentException("rank section is not found.");
   }
 
+  public Set<RoleSet> getRoles() {
+    return roleSets;
+  }
+
   public boolean isValidRole(String role) {
     return roleSets.stream().map(RoleSet::name).anyMatch(role::equals);
   }

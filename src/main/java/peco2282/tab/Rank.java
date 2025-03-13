@@ -13,12 +13,14 @@ public enum Rank {
   RANK_9;
 
   private String rankName;
+  private String rankDisplay;
   private String rankColor;
 
   public static void bind(Config.RankSet[] rankSets) {
     assert rankSets.length == values().length;
     for (Rank rank : values()) {
       rank.setRankName(rankSets[rank.ordinal()].name());
+      rank.setRankDisplay(rankSets[rank.ordinal()].display());
       rank.setRankColor(rankSets[rank.ordinal()].color());
     }
   }
@@ -36,6 +38,14 @@ public enum Rank {
     this.rankName = rankName;
   }
 
+  public String getRankDisplay() {
+    return rankDisplay;
+  }
+
+  public void setRankDisplay(String rankDisplay) {
+    this.rankDisplay = rankDisplay;
+  }
+
   public String getRankColor() {
     return rankColor;
   }
@@ -46,6 +56,6 @@ public enum Rank {
 
   @Override
   public String toString() {
-    return rankColor + rankName + "&r";
+    return rankColor + rankDisplay + "&r";
   }
 }
