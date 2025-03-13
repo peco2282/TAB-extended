@@ -77,7 +77,7 @@ public class PlayerMap {
       return new PlayerData(player, newRole, point);
     }
 
-    public PlayerData replacePoint(IntUnaryOperator newPoint) {
+    public PlayerData replacePoint(IntUnaryOperator newPoint) throws IllegalArgumentException {
       int p = newPoint.applyAsInt(point);
       if (p < 0) {
         throw new IllegalArgumentException("Negative point");

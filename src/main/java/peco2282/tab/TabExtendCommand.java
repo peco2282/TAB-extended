@@ -139,7 +139,15 @@ public class TabExtendCommand implements CommandExecutor, TabCompleter {
         replaced = switch (type) {
           case "add" -> data.replacePoint(i -> i + point);
           case "set" -> data.replacePoint($ -> point);
-          case "remove" -> data.replacePoint(i -> i - point);
+          case "remove" -> {
+            var tmp = data;
+            try {
+              tmp = data.replacePoint(i -> i - point);
+            } catch (IllegalArgumentException e) {
+              sender.sendMessage(ChatColor.YELLOW + "プレイヤー " + name + " の現ポイント: " + data.point() + " 引こうとしているポイント: " + point);
+            }
+            yield tmp;
+          }
           default -> replaced;
         };
         TABExtended.playerMap().putPlayerData(name, replaced);

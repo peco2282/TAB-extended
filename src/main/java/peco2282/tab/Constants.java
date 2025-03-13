@@ -3,14 +3,14 @@ package peco2282.tab;
 public class Constants {
   public static final int[] POINT = {
       1000,
-      3000,
-      4500,
-      6800,
-      10_000,
-      15_000,
-      22_500,
-      34_000,
-      50_000,
+      2000,
+      1500,
+      2300,
+      3200,
+      5000,
+      7500,
+      11_500,
+      16_000,
   };
   public static final char COLOR_CHAR = '§';
 
